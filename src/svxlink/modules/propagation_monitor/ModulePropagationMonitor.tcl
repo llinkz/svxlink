@@ -133,6 +133,7 @@ proc handle_dxrobot {msg_file} {
   set subject [subject_of_msg "$msg_file"]
   printInfo $subject
   
+  # Example: Fri 0511 UTC: 50 MHz Es - 6m OH3SR to LA3EQ on 50313.0 kHz
   if {![regexp {^(\w{3}) (\d{4}) (\w+): (.*?)(?: - (.*))?$} $subject -> dow time tz alerttxt info]} {
     printInfo "*** WARNING: Unknown message format for DXRobot alert in $msg_file: $subject"
     return
@@ -147,10 +148,11 @@ proc handle_dxrobot {msg_file} {
     return
   }
 
-  # Example: Wed 1102 UTC: 50 MHz E-skip Alert - 6 m Band open from OE4VIE to LA5YJ
-  set match [regexp {^(\d+) MHz E-skip Alert$} $alerttxt -> fq_band]
+  # Example: 50 MHz Es
+  set match [regexp {^(\d+) MHz Es$} $alerttxt -> fq_band]
+  # Example: 6m OH3SR to LA3EQ on 50313.0 kHz
   if {$match} {
-    if [regexp {^(\d+) (\w+) Band open from (.+) to (.+)$} $info -> band_num band_unit from to] {
+    if [regexp {^(\d+)(\w+) (.+) to (.+)\ on.+$} $info -> band_num band_unit from to] {
       set band "${band_num}${band_unit}"
       processEvent "dxrobot_eskip_alert $hour $min $band $from $to"
     } else {
@@ -168,26 +170,26 @@ proc handle_vhfdx {msg_file} {
   set subject [subject_of_msg "$msg_file"]
   printInfo $subject
 
-  # Example: Sporadic-E opening on 6m. Best estimated MUF 108 MHz above JN66
+  # Example: Sporadic-E opening on 6m. Best estimated MUF 108 MHz above JN66 (id=bQSJx8)
   set match [regexp \
-	{^Sporadic-E opening on (\d+c?m)\. Best estimated MUF (\d+) MHz above (\w\w\d\d)$} \
+	{^Sporadic-E opening on (\d+c?m)\. Best estimated MUF (\d+) MHz above (\w\w\d\d)} \
 	$subject -> band muf locator]
   if {$match} {
     processEvent "vhfdx_sporadic_e_opening $band $muf $locator"
     return
   }
 
-  # Example: Possible Sporadic-E from JO89 on 6m. Try towards LQ28 (13º)
-  # Example: Possible Sporadic-E from JO89 on 6m. Try towards JN61 (191 degrees)
+  # Example: Possible Sporadic-E from JO89 on 6m. Try towards LQ28 (13º) (id=bQSJx8)
+  # Example: Possible Sporadic-E from JO89 on 6m. Try towards JN61 (191 degrees) (id=bQSJx8)
   set match [regexp \
-	{^Possible Sporadic-E from (\w\w\d\d) on (\d+c?m)\. Try towards (\w\w\d\d) \((\d+) degrees\)$} \
+	{^Possible Sporadic-E from (\w\w\d\d) on (\d+c?m)\. Try towards (\w\w\d\d) \((\d+) degrees\)} \
 	$subject -> from_loc band to_loc direction]
   if {$match} {
     processEvent "vhfdx_possible_sporadic_e_opening $band $from_loc $to_loc $direction"
     return
   }
 
-  # Example: Multi-hop sporadic-E opening on 6m.
+  # Example: Multi-hop sporadic-E opening on 6m. (id=bQSJx8)
   set match [regexp \
 	{^Multi-hop sporadic-E opening on (\d+c?m)\.$} \
 	$subject -> band]
@@ -196,47 +198,47 @@ proc handle_vhfdx {msg_file} {
     return
   }
 
-  # Example: Tropo opening on 2m. up to 998 km. between RZ6BU(KN84PV) and TA3AX(KN30IJ)
+  # Example: Tropo opening on 2m. up to 998 km. between RZ6BU(KN84PV) and TA3AX(KN30IJ) (id=bQSJx8)
   set match [regexp \
-	{^Tropo opening on (\d+c?m)\. up to (\d+) km. between (.*?)\((\w\w\d\d(?:\w\w)?)\) and (.*?)\((\w\w\d\d(?:\w\w)?)\)$} \
+	{^Tropo opening on (\d+c?m)\. up to (\d+) km. between (.*?)\((\w\w\d\d(?:\w\w)?)\) and (.*?)\((\w\w\d\d(?:\w\w)?)\)} \
 	$subject -> band range call1 loc1 call2 loc2]
   if {$match} {
     processEvent "vhfdx_tropo_opening $band $range $call1 $loc1 $call2 $loc2"
     return
   }
 
-  # Example: Aurora active on 6m. down to 55 deg. of Lat. / LY2X/P(KO25MO)
-  # Example: Aurora active on 6m. down to 56 deg. of Lat. / OZ4VV(JO46)
-  # Example: Aurora active on 6m. down to 57º of Lat. / SM7GVF(JO77GA)
+  # Example: Aurora active on 6m. down to 55 deg. of Lat. / LY2X/P(KO25MO) (id=bQSJx8)
+  # Example: Aurora active on 6m. down to 56 deg. of Lat. / OZ4VV(JO46) (id=bQSJx8)
+  # Example: Aurora active on 6m. down to 57º of Lat. / SM7GVF(JO77GA) (id=bQSJx8)
   set match [regexp \
-	{^Aurora active on (\d+c?m)\. down to (\d+).* of Lat. / (.*?)\((\w\w\d\d(?:\w\w)?)\)$} \
+	{^Aurora active on (\d+c?m)\. down to (\d+).* of Lat. / (.*?)\((\w\w\d\d(?:\w\w)?)\)} \
 	$subject -> band lat call loc]
   if {$match} {
     processEvent "vhfdx_aurora_opening $band $lat $call $loc"
     return
   }
 
-  # Example: FAI active on 2m.
+  # Example: FAI active on 2m. (id=bQSJx8)
   set match [regexp \
-	{^FAI active on (\d+c?m)\.$} \
+	{^FAI active on (\d+c?m)\.} \
 	$subject -> band ]
   if {$match} {
     processEvent "vhfdx_fai_active $band"
     return;
   }
 
-  # Example: TEP opening on 6m.
+  # Example: TEP opening on 6m. (id=bQSJx8)
   set match [regexp \
-	{^TEP opening on (\d+c?m)\.$} \
+	{^TEP opening on (\d+c?m)\.} \
 	$subject -> band ]
   if {$match} {
     processEvent "vhfdx_tep_opening $band"
     return;
   }
 
-  # Example: F2 opening on 6m.
+  # Example: F2 opening on 6m. (id=bQSJx8)
   set match [regexp \
-	{^F2 opening on (\d+c?m)\.$} \
+	{^F2 opening on (\d+c?m)\.} \
 	$subject -> band ]
   if {$match} {
     processEvent "vhfdx_f2_opening $band"
